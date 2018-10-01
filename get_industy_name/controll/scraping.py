@@ -5,6 +5,9 @@ import time
 import requests
 
 
+DEFAULT_MENU_PATH = "./get_industy_name/classify/menu.csv"
+
+
 class SearchClassify(object):
     def __init__(self, csv_file):
         self.companyinfo = {}
@@ -23,8 +26,8 @@ class SearchClassify(object):
         self.company_name = self.company_name_full.replace("株式会社", "")
         self.company_name = self.company_name.replace("合同会社", "")
         url = self.api.format(company_name=self.company_name)
-        self.find_classify(url)
-        self.find_category()
+        self._find_classify(url)
+        self._find_category()
         self.companyinfo.update({
             "name{}".format(str(self.count)): self.company_name_full,
             "classify{}".format(str(self.count)): self.classify,
@@ -33,15 +36,15 @@ class SearchClassify(object):
         self.count += 1
         return self.companyinfo
 
-    def find_classify(self, url):
+    def _find_classify(self, url):
         time.sleep(3)
         try:
             request = requests.get(url)
             json_content = request.json()
-            j = json_content["query"]["pages"]
-            for k in j:
-                company_id = k
-            self.html_text = j[company_id]["revisions"][0]["*"]
+            json_query_pages = json_content["query"]["pages"]
+            for id in json_query_pages:
+                company_id = id
+            self.html_text = json_query_pages[company_id]["revisions"][0]["*"]
         except:
             self.classify = ""
             self.category = ""
@@ -52,7 +55,7 @@ class SearchClassify(object):
                 candidates = soup.find_all("a")
                 a_tag_gyousyu = soup.find("a", title=re.compile("業種"))
                 tag_classify = candidates[candidates.index(a_tag_gyousyu) + 1]
-                self.classify = self.tag_to_classify(tag_classify)
+                self.classify = self._remove_tag(tag_classify)
             except:
                 pass
         elif self.html_text.find("th", text=re.compile("団体種類")):
@@ -62,7 +65,7 @@ class SearchClassify(object):
                 dantai_split2 = dantai_split1[1].split('td class="" itemprop="" style="">')
                 dantai_split3 = dantai_split2[1].split('</td>')
                 tag_classify = dantai_split3[0]
-                self.classify = self.tag_to_classify(tag_classify)
+                self.classify = self._remove_tag(tag_classify)
             except:
                 pass
         elif "省" in self.company_name or "庁" in self.company_name:
@@ -79,14 +82,14 @@ class SearchClassify(object):
             self.classify = ""
         return self.classify, self.category
 
-    def tag_to_classify(self, tag_classify):
+    def _remove_tag(self, tag_classify):
         item_str = str(tag_classify)
         classify_split1 = item_str.split('">')
         classify_split2 = classify_split1[1].split("</a>")
         classify = classify_split2[0]
         return classify
 
-    def find_category(self):
+    def _find_category(self):
         with open(self.menu_file, 'r+') as f:
             reader = csv.reader(f)
             templist = []

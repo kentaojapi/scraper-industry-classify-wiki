@@ -1,4 +1,4 @@
-from classify_apps.controll import controllcsv
+from get_industy_name.controll import controllcsv
 import json
 import urllib3
 import requests

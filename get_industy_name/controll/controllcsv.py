@@ -2,7 +2,7 @@ import csv
 from classify_apps.controll import scraping
 
 
-DEFAULT_CSV_PATH = '../csv/company'
+DEFAULT_CSV_PATH = './get_industy_name/csv/company.csv'
 
 
 class ControllCsv(object):
